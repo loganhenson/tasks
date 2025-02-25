@@ -91,3 +91,10 @@ Press `Ctrl + C` while tracking to stop and log the task duration.
 
 Now you can easily track your tasks with a simple CLI command! 🚀
 
+### BONUS
+OSX Menu Bar Icon
+
+```shell
+python menu_bar_tracker.py &
+```
+

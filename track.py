@@ -11,6 +11,7 @@ from rich.table import Table
 from rich.live import Live
 
 TRACK_FILE = os.path.expanduser("~/track.json")
+ACTIVE_TASK_FILE = os.path.expanduser("~/track_active.json")
 console = Console()
 
 def load_json():
@@ -53,6 +54,11 @@ def track_task(title, start_offset):
     start_time = time.time() - start_offset
     today_key = datetime.now().strftime("%Y-%m-%d")
 
+    # Save active task to a separate file
+    active_task = {"tracking": True, "current_task": title, "start_time": start_time}
+    with open(ACTIVE_TASK_FILE, "w") as f:
+        json.dump(active_task, f)
+
     def handle_exit(signum, frame):
         """Handle Ctrl+C and save tracked time."""
         end_time = time.time()
@@ -67,6 +73,11 @@ def track_task(title, start_offset):
             data[today_key][title] = duration
 
         save_json(data)
+
+        # Clear active task when stopped
+        if os.path.exists(ACTIVE_TASK_FILE):
+            os.remove(ACTIVE_TASK_FILE)
+
         console.print(f"\n[green]Logged '{title}' for {duration} seconds ({format_time(duration)})[/green]")
         exit(0)
 
@@ -111,14 +122,28 @@ def select_task():
         print("fzf not found. Please install fzf.")
         return None
 
+def get_status():
+    """Return current tracking status as JSON."""
+    if os.path.exists(ACTIVE_TASK_FILE):
+        with open(ACTIVE_TASK_FILE, "r") as f:
+            status = json.load(f)
+            print(json.dumps(status))
+            return
+
+    print(json.dumps({"tracking": False, "current_task": None}))
 
 def main():
     parser = argparse.ArgumentParser(description="Track time spent on tasks.")
     parser.add_argument("title", nargs="?", help="Task title (omit to list tasks)")
     parser.add_argument("--hr", type=int, default=0, help="Start tracking at X hours offset")
     parser.add_argument("--select-task", action="store_true", help="Select a task interactively using fzf")
+    parser.add_argument("--status", action="store_true", help="Print tracking status as JSON")
 
     args = parser.parse_args()
+
+    if args.status:
+        get_status()
+        return
 
     if args.select_task:
         task = select_task()
