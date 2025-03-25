@@ -27,28 +27,26 @@ def save_json(data):
         json.dump(data, f, indent=4)
 
 def list_tasks():
-    """Display today's tracked tasks first, then history."""
+    """Display today's tracked tasks and total duration."""
     data = load_json()
-    sorted_dates = sorted(data.keys(), reverse=True)  # Sort by most recent
+    today_key = datetime.now().strftime("%Y-%m-%d")
+    today_tasks = data.get(today_key, {})
 
-    if not sorted_dates:
-        console.print("[yellow]No tasks tracked yet.[/yellow]")
+    if not today_tasks:
+        console.print("[yellow]No tasks tracked today.[/yellow]")
         return
 
-    table = Table(title="📅 Tracked Tasks", show_lines=True)
-    table.add_column("Date", style="bold cyan")
+    table = Table(title=f"📅 Tracked Tasks for {today_key}", show_lines=True)
     table.add_column("Task", style="bold magenta")
     table.add_column("Duration", justify="right", style="bold green")
 
-    for date in sorted_dates:
-        for task, duration in data[date].items():
-            hours, remainder = divmod(duration, 3600)
-            minutes, seconds = divmod(remainder, 60)
-            duration_str = f"{hours}hr {minutes}m {seconds}s" if hours else f"{minutes}m {seconds}s"
-            table.add_row(date, task, duration_str)
+    total_duration = 0
+    for task, duration in today_tasks.items():
+        total_duration += duration
+        table.add_row(task, format_time(duration))
 
+    table.add_row("[bold]Total[/bold]", f"[bold green]{format_time(total_duration)}[/bold green]")
     console.print(table)
-
 def track_task(title, start_offset):
     """Track a task and update ~/track.json upon Ctrl+C."""
     start_time = time.time() - start_offset

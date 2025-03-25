@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools", "wheel", "py2app"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = []
+
+[tool.py2app]
+app = ["menu_bar_tracker.py"]
+argv_emulation = false
+plist = { LSUIElement = true }
